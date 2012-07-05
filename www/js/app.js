@@ -19,7 +19,7 @@ require(['sylvester'], function() {
   canvas.height = 480;
   document.body.appendChild(canvas);
 
-  // Init the font
+  // Global font properties
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
 
@@ -122,10 +122,13 @@ require(['sylvester'], function() {
       hero.x += hero.speed * modifier;
     }
 
+    // The player dies when moving off the left side of the screen,
+    // this is just temporary until we get bullets
     if (hero.x < 0) {
       isDead = true;
     }
 
+    // Constrain the hero to the screen
     if (hero.x < 0) {
       hero.x = 0;
     } else if (hero.x > canvas.width - hero.width) {
