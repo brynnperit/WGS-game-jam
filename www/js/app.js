@@ -86,19 +86,19 @@ require(['sylvester'], function(sylvester) {
   };
 
   // Update game objects
-  var update = function(modifier) {
+  var update = function(elapsedTime) {
     //TODO: Fix bug where going diagonally is faster than going in one direction only
     if (38 in keysDown) {// Player holding up
-      hero.y -= hero.speed * modifier;
+      hero.y -= hero.speed * elapsedTime;
     }
     if (40 in keysDown) {// Player holding down
-      hero.y += hero.speed * modifier;
+      hero.y += hero.speed * elapsedTime;
     }
     if (37 in keysDown) {// Player holding left
-      hero.x -= hero.speed * modifier;
+      hero.x -= hero.speed * elapsedTime;
     }
     if (39 in keysDown) {// Player holding right
-      hero.x += hero.speed * modifier;
+      hero.x += hero.speed * elapsedTime;
     }
 
     var currentMouseEvent;
@@ -109,12 +109,20 @@ require(['sylvester'], function(sylvester) {
 
         directionVector: Vector.create([currentMouseEvent.x - hero.x,
                                         currentMouseEvent.y - hero.y]),
-        positionX: hero.x,
-        positionY: hero.y
+        x: hero.x,
+        y: hero.y
       } 
-      bullet.directionVector = bullet.directionVector.toUnitVector().multiply(5);
+      bullet.directionVector = bullet.directionVector.toUnitVector().multiply(baseBulletSpeedPPS);
             
       bulletList.push(bullet);
+    }
+
+    var i, l, currentBullet;
+    for (i = 0, l = bulletList.length; i < l; ++ i){
+      currentBullet = bulletList[i];
+      currentBullet.x += (currentBullet.directionVector.elements[0] * elapsedTime);
+      currentBullet.y += (currentBullet.directionVector.elements[1] * elapsedTime);
+      //TODO: Kill bullet when it goes offscreen
     }
 
     // Are they touching?
@@ -135,6 +143,12 @@ require(['sylvester'], function(sylvester) {
 
     if (monsterReady) {
       ctx.drawImage(monsterImage, monster.x, monster.y);
+    }
+
+    var i, l, currentBullet;
+    for (i = 0, l = bulletList.length; i < l; ++ i){
+      currentBullet = bulletList[i];
+      ctx.drawImage(heroImage, currentBullet.x, currentBullet.y);
     }
 
     // Score
