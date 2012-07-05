@@ -40,8 +40,11 @@ var hero = {
 var monster = {};
 var monstersCaught = 0;
 
+var bulletList = [];
+
 // Handle keyboard controls
 var keysDown = {};
+var clickedLocations = [];
 
 addEventListener("keydown", function (e) {
 	keysDown[e.keyCode] = true;
@@ -49,6 +52,15 @@ addEventListener("keydown", function (e) {
 
 addEventListener("keyup", function (e) {
 	delete keysDown[e.keyCode];
+}, false);
+
+canvas.addEventListener("click", function (e) {
+  clickedLocations.push({
+    //These may need to be screenX and screenY instead
+    x:e.clientX,
+    y:e.clientY,
+    time:e.timeStamp
+  });
 }, false);
 
 // Reset the game when the player catches a monster
@@ -63,6 +75,7 @@ var reset = function () {
 
 // Update game objects
 var update = function (modifier) {
+  //TODO: Fix bug where going diagonally is faster than going in one direction only
 	if (38 in keysDown) { // Player holding up
 		hero.y -= hero.speed * modifier;
 	}
@@ -75,6 +88,14 @@ var update = function (modifier) {
 	if (39 in keysDown) { // Player holding right
 		hero.x += hero.speed * modifier;
 	}
+
+  var currentMouseEvent;
+  //Handle the list of mouse events
+  while(clickedLocations.length > 0){
+    currentMouseEvent = clickedLocations.pop();
+    destX currentMouseEvent.x, destY: currentMouseEvent.y
+    bulletList.push({});
+  }
 
 	// Are they touching?
 	if (
