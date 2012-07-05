@@ -7,6 +7,8 @@ require.config({
 
 require(['sylvester'], function() {
 
+  var baseBulletSpeedPPS = 200;
+
   // Setup requestAnimationFrame
   requestAnimationFrame = window.requestAnimationFrame ||
     window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
@@ -52,6 +54,10 @@ require(['sylvester'], function() {
   var monster = {};
   var monstersCaught = 0;
 
+  // mouse clicks fire bullets
+  var clickedLocations = [];
+  var bulletList = [];
+
   // Handle keyboard controls
   var keysDown = {};
 
@@ -62,6 +68,14 @@ require(['sylvester'], function() {
   addEventListener("keyup", function(e) {
     delete keysDown[e.keyCode];
   }, false);
+  
+  canvas.addEventListener("click", function (e) {
+    clickedLocations.push({
+      x: e.clientX,
+      y: e.clientY,
+      time: e.timeStamp
+    });
+  }, false);
 
   // Reset the game when the player catches a monster
   var reset = function() {
@@ -71,6 +85,9 @@ require(['sylvester'], function() {
     // Throw the monster somewhere on the screen randomly
     monster.x = 32 + (Math.random() * (canvas.width - 64));
     monster.y = 32 + (Math.random() * (canvas.height - 64));
+    
+    bulletList = [];
+    clickedLocations = [];
   };
 
   var UP = 87;
@@ -84,6 +101,8 @@ require(['sylvester'], function() {
 
   // Update game objects
   var update = function(modifier) {
+    //TODO: Fix bug where going diagonally is faster than going in one direction only
+
     if ( UP in keysDown) {// Player holding up
       hero.y -= hero.speed * modifier;
     }
@@ -109,6 +128,31 @@ require(['sylvester'], function() {
       hero.y = canvas.height - hero.height;
     }
 
+    var currentMouseEvent;
+
+    //Handle the list of mouse events
+    while(clickedLocations.length > 0) {
+      currentMouseEvent = clickedLocations.pop();
+      var bullet = {
+        directionVector: Vector.create([currentMouseEvent.x - hero.x,
+                                        currentMouseEvent.y - hero.y]),
+        x: hero.x,
+        y: hero.y
+      }; 
+
+      // TODO: speed doesn't appear to be working as intended
+      bullet.directionVector = bullet.directionVector.toUnitVector().multiply(baseBulletSpeedPPS);
+      bulletList.push(bullet);
+    }
+
+    var i, l, currentBullet;
+    for (i = 0, l = bulletList.length; i < l; ++ i) {
+      currentBullet = bulletList[i];
+      currentBullet.x += (currentBullet.directionVector.elements[0] * modifier);
+      currentBullet.y += (currentBullet.directionVector.elements[1] * modifier);
+      //TODO: Kill bullet when it goes offscreen
+    }
+
     // Are they touching?
     if (hero.x <= (monster.x + 32) && monster.x <= (hero.x + 32) && hero.y <= (monster.y + 32) && monster.y <= (hero.y + 32)) {++monstersCaught;
       reset();
@@ -128,6 +172,12 @@ require(['sylvester'], function() {
 
     if (monsterReady) {
       ctx.drawImage(monsterImage, monster.x, monster.y);
+    }
+
+    var i, l, currentBullet;
+    for (i = 0, l = bulletList.length; i < l; ++ i){
+      currentBullet = bulletList[i];
+      ctx.drawImage(heroImage, currentBullet.x, currentBullet.y);
     }
 
     // Score
