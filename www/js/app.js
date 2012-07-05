@@ -194,6 +194,7 @@ require(['sylvester'], function() {
   var then;
   function restart() {
     isDead = false;
+    monstersCaught = 0;
 
     reset();
     then = Date.now();
