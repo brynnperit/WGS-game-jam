@@ -1,149 +1,165 @@
-// Setup requestAnimationFrame
-requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||  
-                        window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-
-// Create the canvas
-var canvas = document.createElement("canvas");
-var ctx = canvas.getContext("2d");
-canvas.width = 512;
-canvas.height = 480;
-document.body.appendChild(canvas);
-
-// Background image
-var bgReady = false;
-var bgImage = new Image();
-bgImage.onload = function () {
-	bgReady = true;
-};
-bgImage.src = "img/background.png";
-
-// Hero image
-var heroReady = false;
-var heroImage = new Image();
-heroImage.onload = function () {
-	heroReady = true;
-};
-heroImage.src = "img/hero.png";
-
-// Monster image
-var monsterReady = false;
-var monsterImage = new Image();
-monsterImage.onload = function () {
-	monsterReady = true;
-};
-monsterImage.src = "img/monster.png";
-
-// Game objects
-var hero = {
-	speed: 256 // movement in pixels per second
-};
-var monster = {};
-var monstersCaught = 0;
-
-var bulletList = [];
-
-// Handle keyboard controls
-var keysDown = {};
-var clickedLocations = [];
-
-addEventListener("keydown", function (e) {
-	keysDown[e.keyCode] = true;
-}, false);
-
-addEventListener("keyup", function (e) {
-	delete keysDown[e.keyCode];
-}, false);
-
-canvas.addEventListener("click", function (e) {
-  clickedLocations.push({
-    //These may need to be screenX and screenY instead
-    x:e.clientX,
-    y:e.clientY,
-    time:e.timeStamp
-  });
-}, false);
-
-// Reset the game when the player catches a monster
-var reset = function () {
-	hero.x = canvas.width / 2;
-	hero.y = canvas.height / 2;
-
-	// Throw the monster somewhere on the screen randomly
-	monster.x = 32 + (Math.random() * (canvas.width - 64));
-	monster.y = 32 + (Math.random() * (canvas.height - 64));
-};
-
-// Update game objects
-var update = function (modifier) {
-  //TODO: Fix bug where going diagonally is faster than going in one direction only
-	if (38 in keysDown) { // Player holding up
-		hero.y -= hero.speed * modifier;
-	}
-	if (40 in keysDown) { // Player holding down
-		hero.y += hero.speed * modifier;
-	}
-	if (37 in keysDown) { // Player holding left
-		hero.x -= hero.speed * modifier;
-	}
-	if (39 in keysDown) { // Player holding right
-		hero.x += hero.speed * modifier;
-	}
-
-  var currentMouseEvent;
-  //Handle the list of mouse events
-  while(clickedLocations.length > 0){
-    currentMouseEvent = clickedLocations.pop();
-    destX currentMouseEvent.x, destY: currentMouseEvent.y
-    bulletList.push({});
+require.config({
+  baseUrl: 'js/lib',
+  paths:{
+    app: '../app'
   }
+});
 
-	// Are they touching?
-	if (
-		hero.x <= (monster.x + 32)
-		&& monster.x <= (hero.x + 32)
-		&& hero.y <= (monster.y + 32)
-		&& monster.y <= (hero.y + 32)
-	) {
-		++monstersCaught;
-		reset();
-	}
-};
+require(['sylvester'], function(sylvester) {
 
-// Draw everything
-var render = function () {
-	if (bgReady) {
-		ctx.drawImage(bgImage, 0, 0);
-	}
+  var baseBulletSpeedPPS = 5; 
+  
+  // Setup requestAnimationFrame
+  requestAnimationFrame = window.requestAnimationFrame ||
+    window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame
+     || window.msRequestAnimationFrame;
 
-	if (heroReady) {
-		ctx.drawImage(heroImage, hero.x, hero.y);
-	}
+  // Create the canvas
+  var canvas = document.createElement("canvas");
+  var ctx = canvas.getContext("2d");
+  canvas.width = 512;
+  canvas.height = 480;
+  document.body.appendChild(canvas);
 
-	if (monsterReady) {
-		ctx.drawImage(monsterImage, monster.x, monster.y);
-	}
+  // Background image
+  var bgReady = false;
+  var bgImage = new Image();
+  bgImage.onload = function() {
+    bgReady = true;
+  };
+  bgImage.src = "img/background.png";
 
-	// Score
-	ctx.fillStyle = "rgb(250, 250, 250)";
-	ctx.font = "24px Helvetica";
-	ctx.textAlign = "left";
-	ctx.textBaseline = "top";
-	ctx.fillText("Goblins caught: " + monstersCaught, 32, 32);
-};
+  // Hero image
+  var heroReady = false;
+  var heroImage = new Image();
+  heroImage.onload = function() {
+    heroReady = true;
+  };
+  heroImage.src = "img/hero.png";
 
-// The main game loop
-var main = function () {
-	var now = Date.now();
-	var delta = now - then;
+  // Monster image
+  var monsterReady = false;
+  var monsterImage = new Image();
+  monsterImage.onload = function() {
+    monsterReady = true;
+  };
+  monsterImage.src = "img/monster.png";
 
-	update(delta / 1000);
-	render();
+  // Game objects
+  var hero = {
+    speed : 256 // movement in pixels per second
+  };
+  var monster = {};
+  var monstersCaught = 0;
 
-	then = now;
-	requestAnimationFrame(main);
-};
+  var bulletList = [];
 
-// Let's play this game!
-reset();
-var then = Date.now();
-main();
+  // Handle keyboard controls
+  var keysDown = {};
+  var clickedLocations = [];
+
+  addEventListener("keydown", function(e) {
+    keysDown[e.keyCode] = true;
+  }, false);
+
+  addEventListener("keyup", function(e) {
+    delete keysDown[e.keyCode];
+  }, false);
+
+  canvas.addEventListener("click", function(e) {
+    clickedLocations.push({
+      //These may need to be screenX and screenY instead
+      x : e.clientX,
+      y : e.clientY,
+      time : e.timeStamp
+    });
+  }, false);
+
+  // Reset the game when the player catches a monster
+  var reset = function() {
+    hero.x = canvas.width / 2;
+    hero.y = canvas.height / 2;
+
+    // Throw the monster somewhere on the screen randomly
+    monster.x = 32 + (Math.random() * (canvas.width - 64));
+    monster.y = 32 + (Math.random() * (canvas.height - 64));
+  };
+
+  // Update game objects
+  var update = function(modifier) {
+    //TODO: Fix bug where going diagonally is faster than going in one direction only
+    if (38 in keysDown) {// Player holding up
+      hero.y -= hero.speed * modifier;
+    }
+    if (40 in keysDown) {// Player holding down
+      hero.y += hero.speed * modifier;
+    }
+    if (37 in keysDown) {// Player holding left
+      hero.x -= hero.speed * modifier;
+    }
+    if (39 in keysDown) {// Player holding right
+      hero.x += hero.speed * modifier;
+    }
+
+    var currentMouseEvent;
+    //Handle the list of mouse events
+    while (clickedLocations.length > 0) {
+      currentMouseEvent = clickedLocations.pop();
+      var bullet = {
+
+        directionVector: Vector.create([currentMouseEvent.x - hero.x,
+                                        currentMouseEvent.y - hero.y]),
+        positionX: hero.x,
+        positionY: hero.y
+      } 
+      bullet.directionVector = bullet.directionVector.toUnitVector().multiply(5);
+            
+      bulletList.push(bullet);
+    }
+
+    // Are they touching?
+    if (hero.x <= (monster.x + 32) && monster.x <= (hero.x + 32) && hero.y <= (monster.y + 32) && monster.y <= (hero.y + 32)) {++monstersCaught;
+      reset();
+    }
+  };
+
+  // Draw everything
+  var render = function() {
+    if (bgReady) {
+      ctx.drawImage(bgImage, 0, 0);
+    }
+
+    if (heroReady) {
+      ctx.drawImage(heroImage, hero.x, hero.y);
+    }
+
+    if (monsterReady) {
+      ctx.drawImage(monsterImage, monster.x, monster.y);
+    }
+
+    // Score
+    ctx.fillStyle = "rgb(250, 250, 250)";
+    ctx.font = "24px Helvetica";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("Goblins caught: " + monstersCaught, 32, 32);
+  };
+
+  // The main game loop
+  var main = function() {
+    var now = Date.now();
+    var delta = now - then;
+
+    update(delta / 1000);
+    render();
+
+    then = now;
+    requestAnimationFrame(main);
+  };
+
+  // Let's play this game!
+  reset();
+  var then = Date.now();
+  main();
+
+});
