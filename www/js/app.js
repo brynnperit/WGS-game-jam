@@ -1,3 +1,10 @@
+require.config({
+  baseUrl: 'js/lib',
+  paths: {
+    app: '../app'
+  }
+});
+
 // Setup requestAnimationFrame
 requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||  
                         window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
