@@ -5,6 +5,8 @@ require.config({
   }
 });
 
+require(['sylvester'], function() {
+  
 // Setup requestAnimationFrame
 requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||  
                         window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
@@ -157,3 +159,4 @@ var main = function () {
 reset();
 var then = Date.now();
 main();
+});
