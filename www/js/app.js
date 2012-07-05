@@ -61,20 +61,25 @@ var reset = function () {
 	monster.y = 32 + (Math.random() * (canvas.height - 64));
 };
 
+var UP = 87;    // W
+var DOWN = 83;  // A
+var LEFT = 65;  // S
+var RIGHT = 68; // D
+
 // Update game objects
 var update = function (modifier) {
-	if (38 in keysDown) { // Player holding up
-		hero.y -= hero.speed * modifier;
-	}
-	if (40 in keysDown) { // Player holding down
-		hero.y += hero.speed * modifier;
-	}
-	if (37 in keysDown) { // Player holding left
-		hero.x -= hero.speed * modifier;
-	}
-	if (39 in keysDown) { // Player holding right
-		hero.x += hero.speed * modifier;
-	}
+  if (UP in keysDown) { // Player holding up
+    hero.y -= hero.speed * modifier;
+  }
+  if (DOWN in keysDown) { // Player holding down
+    hero.y += hero.speed * modifier;
+  }
+  if (LEFT in keysDown) { // Player holding left
+    hero.x -= hero.speed * modifier;
+  }
+  if (RIGHT in keysDown) { // Player holding right
+    hero.x += hero.speed * modifier;
+  }
 
 	// Are they touching?
 	if (
