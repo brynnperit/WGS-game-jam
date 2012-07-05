@@ -1,15 +1,15 @@
 {
-  "name": "Your Game",
-  "description": "A description of your game",
+  "name": "Simple Canvas Game",
+  "description": "A simple HTML5 2D canvas game.",
   "version": "0.1",
   "manifest_version": 2,
   "app": {
     "urls": [
-      "*://example.com/yourgame"
+      "*://localhost/examples/simple_canvas_game/"
     ],
     "launch": {
       "container": "panel",
-      "web_url": "http://example.com/yourgame"
+      "web_url": "http://localhost:8086/examples/simple_canvas_game/"
     }
   },
   "icons": {

@@ -11,18 +11,20 @@
   <script>
     function onsuccess() {
       console.log( "app installed" );
+      this.launch();
     }
     
-    function onerror(event) {
+    function onerror(error) {
       /*global console: false */      
-      console.log("app install failed: " + this.error.name);
+      console.log("app install failed: " + error.message +
+      "(" + error.code + ")");
     }
 
     // Get the current path, without the file name
     var path = document.URL.split( '/' ).slice( 0, -1 ).join( '/' );
 
     var request = navigator.mozApps.install(path + "/manifest.webapp");
-    request.onsuccess = onsuccess;
+    request.onsuccess = onsuccess.bind( request );
     request.onerror = onerror;
   </script>
 </body>
