@@ -35,7 +35,9 @@ monsterImage.src = "img/monster.png";
 
 // Game objects
 var hero = {
-	speed: 256 // movement in pixels per second
+	speed: 256, // movement in pixels per second
+    width: 32,
+    height: 32
 };
 var monster = {};
 var monstersCaught = 0;
@@ -81,6 +83,21 @@ var update = function (modifier) {
     hero.x += hero.speed * modifier;
   }
 
+    if (hero.x < 0) {
+        hero.x = 0;
+    }
+    else if (hero.x > canvas.width - hero.width) {
+        hero.x = canvas.width - hero.width;
+    }
+
+    if (hero.y < 0) {
+        hero.y = 0;
+    }
+    else if (hero.y > canvas.height - hero.height) {
+        hero.y = canvas.height - hero.height;
+    }
+    
+
 	// Are they touching?
 	if (
 		hero.x <= (monster.x + 32)
@@ -91,6 +108,8 @@ var update = function (modifier) {
 		++monstersCaught;
 		reset();
 	}
+
+    
 };
 
 // Draw everything
