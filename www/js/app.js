@@ -46,37 +46,21 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
 
-  // Background image
-  var bgReady = false;
-  var bgImage = new Image();
-  bgImage.onload = function() {
-    bgReady = true;
+  function LoadableImage(imageUrl)
+  {
+    this.image = new Image();
+    this.image.onload = this.onload.bind(this);
+    this.image.src = imageUrl;
+  }
+  LoadableImage.prototype = {
+    ready: false,
+    onload: function(){this.ready = true}
   };
-  bgImage.src = "img/background.png";
 
-  // Hero image
-  var heroReady = false;
-  var heroImage = new Image();
-  heroImage.onload = function() {
-    heroReady = true;
-  };
-  heroImage.src = "img/hero.png";
-
-  // Monster image
-  var monsterReady = false;
-  var monsterImage = new Image();
-  monsterImage.onload = function() {
-    monsterReady = true;
-  };
-  monsterImage.src = "img/monster.png";
-
-  // Bullet image
-  var bulletReady = false;
-  var bulletImage = new Image();
-  bulletImage.onload = function() {
-    bulletReady = true;
-  };
-  bulletImage.src = "img/bullet1.png";
+  var bgImage = new LoadableImage("img/background.png");
+  var heroImage = new LoadableImage("img/hero.png");
+  var monsterImage = new LoadableImage("img/monster.png");
+  var bulletImage = new LoadableImage("img/bullet1.png");
 
   // search for recent tweets with our keyword
   var keyword = "mozilla";
@@ -142,6 +126,12 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
     });
   }, false);
 
+  var ENTER = 13;
+  var UP = 87; // W
+  var DOWN = 83; // A
+  var LEFT = 65; // S
+  var RIGHT = 68; // D
+
   // Reset the game when the player catches a monster
   var reset = function() {
     hero.x = canvas.width / 2;
@@ -160,15 +150,31 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
 
   };
 
-  var ENTER = 13;
-  var UP = 87; // W
-  var DOWN = 83; // A
-  var LEFT = 65; // S
-  var RIGHT = 68; // D
+  // Add a bullet, which just a hash of options
+  function addBullet(bullet) {
+    bullet.aabb = { hx: 8, hy: 8 };
+    bullet.directionVector =
+      bullet.directionVector.toUnitVector().multiply(bullet.speedPPS);
+    bulletList.push(bullet);
+  }
+
+  function checkBoundaries(obj) {
+    if (obj.x < 0) {
+      obj.x = 0;
+    } else if (obj.x > canvas.width - obj.width) {
+      obj.x = canvas.width - obj.width;
+    }
+
+    if (obj.y < 0) {
+      obj.y = 0;
+    } else if (obj.y > canvas.height - obj.height) {
+      obj.y = canvas.height - obj.height;
+    }
+  }
 
   function renderDeath() {
     // For some reason, need to do this else the font isn't aliased
-    ctx.drawImage(bgImage, 0, 0);
+    ctx.drawImage(bgImage.image, 0, 0);
 
     ctx.font = "52px Helvetica";
     ctx.fillStyle = "rgb(75, 0, 0)";
@@ -185,41 +191,33 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
   }
   
   // Update game objects
-
   function update(modifier) {
     var currentMouseEvent;
 
     //Handle the list of mouse events
     while(clickedLocations.length > 0) {
       currentMouseEvent = clickedLocations.pop();
-      var bullet = {
+      addBullet({
         speedPPS: 200,
         directionVector: Vector.create([currentMouseEvent.x - hero.x,
                                         currentMouseEvent.y - hero.y]),
         x: hero.x,
         y: hero.y,
-        aabb: {
-        	hx: 8,
-        	hy: 8
-        }
-      }; 
-
-      bullet.directionVector =
-        bullet.directionVector.toUnitVector().multiply(bullet.speedPPS);
-      bulletList.push(bullet);
+        fromHero: true
+      });
     }
 
     var heroMoveAmount = {x: 0, y: 0};
-    if ( UP in keysDown) {// Player holding up
+    if (UP in keysDown) {// Player holding up
       heroMoveAmount.y -= hero.speed * modifier;
     }
-    if ( DOWN in keysDown) {// Player holding down
+    if (DOWN in keysDown) {// Player holding down
       heroMoveAmount.y += hero.speed * modifier;
     }
-    if ( LEFT in keysDown) {// Player holding left
+    if (LEFT in keysDown) {// Player holding left
       heroMoveAmount.x -= hero.speed * modifier;
     }
-    if ( RIGHT in keysDown) {// Player holding right
+    if (RIGHT in keysDown) {// Player holding right
       heroMoveAmount.x += hero.speed * modifier;
     }
     // This prevents the hero from moving faster diagonally than they can otherwise
@@ -243,9 +241,14 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
         // this bullet is offscreen, ditch it
         bulletList.splice(i, 1);
       }
-      if (checkCollision (monster, currentBullet)) {
-      	monstersCaught ++;
-      	reset();
+      if (currentBullet.fromHero) {
+        if(checkCollision(monster, currentBullet)) {
+      	  monstersCaught++;
+      	  reset();
+        }
+      }
+      else if(checkCollision(hero, currentBullet)) {
+        isDead = true;
       }
     }
 
@@ -255,17 +258,38 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
       isDead = true;
     }
 
-    // Constrain the hero to the screen
-    if (hero.x < 0) {
-      hero.x = 0;
-    } else if (hero.x > canvas.width - hero.width) {
-      hero.x = canvas.width - hero.width;
+    // Make the enemy move a little bit
+    if(Math.random() < .3) {
+      var rand = Math.random();
+      var dist = 10;
+
+      if(rand < .1) {
+        monster.x += dist;
+      }
+      else if(rand < .2) {
+        monster.x -= dist;
+      }
+      else if(rand < .3) {
+        monster.y += dist;
+      }
+      else if(rand < .4) {
+        monster.y -= dist;
+      }
     }
 
-    if (hero.y < 0) {
-      hero.y = 0;
-    } else if (hero.y > canvas.height - hero.height) {
-      hero.y = canvas.height - hero.height;
+    // Constrain the hero and monster to the screen
+    checkBoundaries(hero);
+    checkBoundaries(monster);
+
+    // Make the enemy shoot bullets randomly
+    if(Math.random() < .05) {
+      addBullet({ 
+        speedPPS: 150,
+        directionVector: Vector.create([Math.random()*2-1,
+                                        Math.random()*2-1]),
+        x: monster.x + monster.width/2,
+        y: monster.y + monster.height/2
+      });
     }
 
     // Are they touching?
@@ -282,23 +306,25 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
 
   // Draw everything
   function render() {
-    if (bgReady) {
-      ctx.drawImage(bgImage, 0, 0);
+    if (bgImage.ready) {
+      ctx.drawImage(bgImage.image, 0, 0);
     }
 
-    if (heroReady) {
-      ctx.drawImage(heroImage, hero.x, hero.y);
+    if (heroImage.ready) {
+      ctx.drawImage(heroImage.image, hero.x, hero.y);
     }
 
-    if (monsterReady) {
-      ctx.drawImage(monsterImage, monster.x, monster.y);
+    if (monsterImage.ready) {
+      ctx.drawImage(monsterImage.image, monster.x, monster.y);
     }
 
     var i, l, currentBullet;
     for (i = 0, l = bulletList.length; i < l; ++ i){
       currentBullet = bulletList[i];
-      if (bulletReady) {
-        ctx.drawImage(bulletImage, currentBullet.x - bulletImage.width/2, currentBullet.y - bulletImage.height/2);
+      if (bulletImage.ready) {
+        ctx.drawImage(bulletImage.image,
+          currentBullet.x - bulletImage.image.width/2,
+          currentBullet.y - bulletImage.image.height/2);
       }
     }
 
