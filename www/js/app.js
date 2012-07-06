@@ -12,14 +12,28 @@ require(['sylvester'], function() {
     window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
     window.msRequestAnimationFrame;
 
-	function checkCollision( aabb1, aabb2 ) {
-    return !(
-      (aabb1.lowerLeft[1] < aabb2.upperRight[1]) ||
-      (aabb1.upperRight[1] > aabb2.lowerLeft[1]) ||
-      (aabb1.lowerLeft[0] > aabb2.upperRight[0]) ||
-      (aabb1.upperRight[0] < aabb2.lowerLeft[0])
-    );
-  }
+	function checkCollision( obj1, obj2 ) {
+    var top1, top2,
+        bottom1, bottom2,
+        left1, left2,
+        right1, right2;
+    
+    top1 = obj1.y + obj1.aabb.hy;
+    top2 = obj2.y + obj2.aabb.hy;
+    bottom1 = obj1.y - obj1.aabb.hy;
+    bottom2 = obj2.y - obj2.aabb.hy;
+    left1 = obj1.x - obj1.aabb.hx;
+    left2 = obj2.x - obj2.aabb.hx;
+    right1 = obj1.x + obj1.aabb.hx;
+    right2 = obj2.x + obj2.aabb.hx;
+    
+    var outsideBottom = bottom1 > top2,
+        outsideTop = top1 < bottom2,
+        outsideLeft = left1 > right2,
+        outsideRight = right1 < left2;
+        
+    return !( outsideBottom || outsideTop || outsideLeft || outsideRight );
+	}
 
   // Create the canvas
   var canvas = document.createElement("canvas");
@@ -68,9 +82,20 @@ require(['sylvester'], function() {
   var hero = {
     speed : 256, // movement in pixels per second
     width : 32,
-    height : 32
+    height : 32,
+    aabb: {
+      hx: 16,
+      hy: 16
+    }
   };
-  var monster = {};
+  var monster = {
+  	width: 30,
+  	height: 32,
+    aabb: {
+  	  hx: 15,
+  	  hy: 16
+    }
+  };
   var monstersCaught = 0;
   var isDead = false;
 
@@ -147,6 +172,28 @@ require(['sylvester'], function() {
   // Update game objects
 
   function update(modifier) {
+    var currentMouseEvent;
+
+    //Handle the list of mouse events
+    while(clickedLocations.length > 0) {
+      currentMouseEvent = clickedLocations.pop();
+      var bullet = {
+        speedPPS: 200,
+        directionVector: Vector.create([currentMouseEvent.x - hero.x,
+                                        currentMouseEvent.y - hero.y]),
+        x: hero.x,
+        y: hero.y,
+        aabb: {
+        	hx: 8,
+        	hy: 8
+        }
+      }; 
+
+      bullet.directionVector =
+        bullet.directionVector.toUnitVector().multiply(bullet.speedPPS);
+      bulletList.push(bullet);
+    }
+
     var heroMoveAmount = {x: 0, y: 0};
     if ( UP in keysDown) {// Player holding up
       heroMoveAmount.y -= hero.speed * modifier;
@@ -160,7 +207,7 @@ require(['sylvester'], function() {
     if ( RIGHT in keysDown) {// Player holding right
       heroMoveAmount.x += hero.speed * modifier;
     }
-    //This prevents the hero from moving faster diagonally than they can otherwise
+    // This prevents the hero from moving faster diagonally than they can otherwise
     var maxMoveAmount = hero.speed * modifier;
     var actualMoveAmount = Math.sqrt(heroMoveAmount.x * heroMoveAmount.x + heroMoveAmount.y * heroMoveAmount.y);
     if (actualMoveAmount > maxMoveAmount){
@@ -170,6 +217,22 @@ require(['sylvester'], function() {
 
     hero.x += heroMoveAmount.x;
     hero.y += heroMoveAmount.y;
+
+    var i, currentBullet;
+    for (i = 0; i < bulletList.length; ++ i) {
+      currentBullet = bulletList[i];
+      currentBullet.x += (currentBullet.directionVector.elements[0] * modifier);
+      currentBullet.y += (currentBullet.directionVector.elements[1] * modifier);
+      if (currentBullet.x < 0 || currentBullet.x > canvas.width ||
+          currentBullet.y < 0 || currentBullet.y > canvas.height) {
+        // this bullet is offscreen, ditch it
+        bulletList.splice(i, 1);
+      }
+      if (checkCollision (monster, currentBullet)) {
+      	monstersCaught ++;
+      	reset();
+      }
+    }
 
     // The player dies when moving off the left side of the screen,
     // this is just temporary until we get bullets
@@ -188,37 +251,6 @@ require(['sylvester'], function() {
       hero.y = 0;
     } else if (hero.y > canvas.height - hero.height) {
       hero.y = canvas.height - hero.height;
-    }
-
-    var currentMouseEvent;
-
-    //Handle the list of mouse events
-    while(clickedLocations.length > 0) {
-      currentMouseEvent = clickedLocations.pop();
-      var bullet = {
-        speedPPS: 200,
-        directionVector: Vector.create([currentMouseEvent.x - hero.x,
-                                        currentMouseEvent.y - hero.y]),
-        x: hero.x,
-        y: hero.y
-      }; 
-
-      bullet.directionVector =
-        bullet.directionVector.toUnitVector().multiply(bullet.speedPPS);
-      bulletList.push(bullet);
-    }
-
-    var i, currentBullet;
-    for (i = 0; i < bulletList.length; ++ i) {
-      currentBullet = bulletList[i];
-      currentBullet.x += (currentBullet.directionVector.elements[0] * modifier);
-      currentBullet.y += (currentBullet.directionVector.elements[1] * modifier);
-      if (currentBullet.x < 0 || currentBullet.x > canvas.width ||
-          currentBullet.y < 0 || currentBullet.y > canvas.height) {
-        // this bullet is offscreen, ditch it
-        bulletList.splice(i, 1);
-
-      }
     }
 
     // Are they touching?
