@@ -9,6 +9,8 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
 
   var hasTwitterImages = false;
 
+  var minimumMonsterDistanceOnSpawn = 200;
+
   // Setup requestAnimationFrame
   requestAnimationFrame = window.requestAnimationFrame ||
     window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
@@ -86,6 +88,8 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
   // Game objects
   var hero = {
     speed : 256, // movement in pixels per second
+    x : canvas.width / 2,
+    y : canvas.height / 2,
     aabb: {
       hx: 16,
       hy: 16
@@ -136,12 +140,16 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
 
   // Reset the game when the player catches a monster
   var reset = function() {
-    hero.x = canvas.width / 2;
-    hero.y = canvas.height / 2;
 
-    // Throw the monster somewhere on the screen randomly
-    monster.x = 32 + (Math.random() * (canvas.width - 64));
-    monster.y = 32 + (Math.random() * (canvas.height - 64));
+    // Throw the monster somewhere on the screen randomly that's not within the
+    // minimum spawn distance of the player
+    do {
+      monster.x = 32 + (Math.random() * (canvas.width - 64));
+      monster.y = 32 + (Math.random() * (canvas.height - 64));
+    } while( Math.sqrt(Math.pow(monster.x - hero.x, 2),
+                       Math.pow(monster.y - hero.y, 2))
+             < minimumMonsterDistanceOnSpawn);
+
     if (hasTwitterImages){
       var validMonsterImages = $.grep(twitterImages, function(element, index)
       {
