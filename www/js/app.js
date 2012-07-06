@@ -46,37 +46,21 @@ require(['sylvester'], function() {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
 
-  // Background image
-  var bgReady = false;
-  var bgImage = new Image();
-  bgImage.onload = function() {
-    bgReady = true;
+  function LoadableImage(imageUrl)
+  {
+    this.image = new Image();
+    this.image.onload = this.onload.bind(this);
+    this.image.src = imageUrl;
+  }
+  LoadableImage.prototype = {
+    ready: false,
+    onload: function(){this.ready = true}
   };
-  bgImage.src = "img/background.png";
 
-  // Hero image
-  var heroReady = false;
-  var heroImage = new Image();
-  heroImage.onload = function() {
-    heroReady = true;
-  };
-  heroImage.src = "img/hero.png";
-
-  // Monster image
-  var monsterReady = false;
-  var monsterImage = new Image();
-  monsterImage.onload = function() {
-    monsterReady = true;
-  };
-  monsterImage.src = "img/monster.png";
-
-  // Bullet image
-  var bulletReady = false;
-  var bulletImage = new Image();
-  bulletImage.onload = function() {
-    bulletReady = true;
-  };
-  bulletImage.src = "img/bullet1.png";
+  var bgImage = new LoadableImage("img/background.png");
+  var heroImage = new LoadableImage("img/hero.png");
+  var monsterImage = new LoadableImage("img/monster.png");
+  var bulletImage = new LoadableImage("img/bullet1.png");
 
   // Game objects
   var hero = {
@@ -175,7 +159,7 @@ require(['sylvester'], function() {
 
   function renderDeath() {
     // For some reason, need to do this else the font isn't aliased
-    ctx.drawImage(bgImage, 0, 0);
+    ctx.drawImage(bgImage.image, 0, 0);
 
     ctx.font = "52px Helvetica";
     ctx.fillStyle = "rgb(75, 0, 0)";
@@ -307,23 +291,25 @@ require(['sylvester'], function() {
 
   // Draw everything
   function render() {
-    if (bgReady) {
-      ctx.drawImage(bgImage, 0, 0);
+    if (bgImage.ready) {
+      ctx.drawImage(bgImage.image, 0, 0);
     }
 
-    if (heroReady) {
-      ctx.drawImage(heroImage, hero.x, hero.y);
+    if (heroImage.ready) {
+      ctx.drawImage(heroImage.image, hero.x, hero.y);
     }
 
-    if (monsterReady) {
-      ctx.drawImage(monsterImage, monster.x, monster.y);
+    if (monsterImage.ready) {
+      ctx.drawImage(monsterImage.image, monster.x, monster.y);
     }
 
     var i, l, currentBullet;
     for (i = 0, l = bulletList.length; i < l; ++ i){
       currentBullet = bulletList[i];
-      if (bulletReady) {
-        ctx.drawImage(bulletImage, currentBullet.x - bulletImage.width/2, currentBullet.y - bulletImage.height/2);
+      if (bulletImage.ready) {
+        ctx.drawImage(bulletImage.image,
+          currentBullet.x - bulletImage.image.width/2,
+          currentBullet.y - bulletImage.image.height/2);
       }
     }
 
