@@ -210,7 +210,7 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
     while(clickedLocations.length > 0) {
       currentMouseEvent = clickedLocations.pop();
       addBullet({
-        speedPPS: 10,
+        speedPPS: 200,
         directionVector: Vector.create([currentMouseEvent.x - hero.x,
           currentMouseEvent.y - hero.y]),
         x: hero.x,
@@ -296,7 +296,7 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
     // Make the enemy shoot bullets randomly
     if(Math.random() < .05) {
       addBullet({
-        speedPPS: 10,
+        speedPPS: 150,
         directionVector: Vector.create([Math.random()*2-1,
           Math.random()*2-1]),
         x: monster.x,
