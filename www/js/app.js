@@ -81,20 +81,18 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
   // search for recent tweets with our keyword
   var keyword = "mozilla";
   var avatarURLs = [];
-  $.ajax({
-    url: 'http://search.twitter.com/search.json?q=' + keyword + 
-         '&result_type=mixed',
-    dataType: "jsonp",
-    jsonpCallback: "avatarSearchCallback"
-  });
-            
-  function avatarSearchCallback (data) {
-    $.each(data.results, function(index, val) {
-       avatarURLs.push(val.profile_image_url);
-       console.log(val.profile_image_url);
-    });        
-  };
-  
+  $.getJSON("http://search.twitter.com/search.json?q=" + keyword +
+    "&result_type=mixed"+"&callback=?",
+    {},
+    function(data){
+      $.each(data.results, function(index, val) {
+        avatarURLs.push(val.profile_image_url);
+        console.log(val.profile_image_url);
+      });
+      monsterReady = false;
+      monsterImage.src = avatarURLs[0];
+    });
+
   // Game objects
   var hero = {
     speed : 256, // movement in pixels per second
