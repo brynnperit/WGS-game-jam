@@ -12,6 +12,15 @@ require(['sylvester'], function() {
     window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
     window.msRequestAnimationFrame;
 
+	function checkCollision( aabb1, aabb2 ) {
+    return !(
+      (aabb1.lowerLeft[1] < aabb2.upperRight[1]) ||
+      (aabb1.upperRight[1] > aabb2.lowerLeft[1]) ||
+      (aabb1.lowerLeft[0] > aabb2.upperRight[0]) ||
+      (aabb1.upperRight[0] < aabb2.lowerLeft[0])
+    );
+  }
+
   // Create the canvas
   var canvas = document.createElement("canvas");
   var ctx = canvas.getContext("2d");
