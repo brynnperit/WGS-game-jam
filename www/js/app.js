@@ -86,16 +86,12 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
   // Game objects
   var hero = {
     speed : 256, // movement in pixels per second
-    width : 32,
-    height : 32,
     aabb: {
       hx: 16,
       hy: 16
     }
   };
   var monster = {
-    width: 30,
-    height: 32,
     aabb: {
       hx: 15,
       hy: 16
@@ -303,8 +299,8 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
         speedPPS: 10,
         directionVector: Vector.create([Math.random()*2-1,
           Math.random()*2-1]),
-        x: monster.x + monster.width/2,
-        y: monster.y + monster.height/2
+        x: monster.x,
+        y: monster.y
       });
     }
 
