@@ -19,6 +19,10 @@ require(['sylvester'], function() {
   canvas.height = 480;
   document.body.appendChild(canvas);
 
+  // Global font properties
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+
   // Background image
   var bgReady = false;
   var bgImage = new Image();
@@ -51,12 +55,18 @@ require(['sylvester'], function() {
   };
   var monster = {};
   var monstersCaught = 0;
+  var isDead = false;
 
   // Handle keyboard controls
   var keysDown = {};
 
   addEventListener("keydown", function(e) {
-    keysDown[e.keyCode] = true;
+    if(isDead && e.keyCode == ENTER) {
+      restart();
+    }
+    else {
+      keysDown[e.keyCode] = true;
+    }
   }, false);
 
   addEventListener("keyup", function(e) {
@@ -73,17 +83,32 @@ require(['sylvester'], function() {
     monster.y = 32 + (Math.random() * (canvas.height - 64));
   };
 
-  var UP = 87;
-  // W
-  var DOWN = 83;
-  // A
-  var LEFT = 65;
-  // S
-  var RIGHT = 68;
-  // D
+  var ENTER = 13;
+  var UP = 87; // W
+  var DOWN = 83; // A
+  var LEFT = 65; // S
+  var RIGHT = 68; // D
 
+  function renderDeath() {
+    // For some reason, need to do this else the font isn't aliased
+    ctx.drawImage(bgImage, 0, 0);
+
+    ctx.font = "52px Helvetica";
+    ctx.fillStyle = "rgb(75, 0, 0)";
+    ctx.fillText("You Died", 150, 128);
+
+    ctx.font = "32px Helvetica";
+    ctx.fillStyle = "rgb(100, 25, 25)";
+    ctx.fillText("But you caught " + monstersCaught + " goblins!",
+                 80, 200);
+
+    ctx.font = "20px Helvetica";
+    ctx.fillStyle = "rgb(255, 255, 255)";
+    ctx.fillText("Hit enter to restart", 170, canvas.height - 100);
+  }
+  
   // Update game objects
-  var update = function(modifier) {
+  function update(modifier) {
     if ( UP in keysDown) {// Player holding up
       hero.y -= hero.speed * modifier;
     }
@@ -97,6 +122,13 @@ require(['sylvester'], function() {
       hero.x += hero.speed * modifier;
     }
 
+    // The player dies when moving off the left side of the screen,
+    // this is just temporary until we get bullets
+    if (hero.x < 0) {
+      isDead = true;
+    }
+
+    // Constrain the hero to the screen
     if (hero.x < 0) {
       hero.x = 0;
     } else if (hero.x > canvas.width - hero.width) {
@@ -110,14 +142,19 @@ require(['sylvester'], function() {
     }
 
     // Are they touching?
-    if (hero.x <= (monster.x + 32) && monster.x <= (hero.x + 32) && hero.y <= (monster.y + 32) && monster.y <= (hero.y + 32)) {++monstersCaught;
+    if (hero.x <= (monster.x + 32) && 
+        monster.x <= (hero.x + 32) && 
+        hero.y <= (monster.y + 32) && 
+        monster.y <= (hero.y + 32)) {
+
+      monstersCaught++;
       reset();
     }
 
   };
 
   // Draw everything
-  var render = function() {
+  function render() {
     if (bgReady) {
       ctx.drawImage(bgImage, 0, 0);
     }
@@ -131,27 +168,37 @@ require(['sylvester'], function() {
     }
 
     // Score
-    ctx.fillStyle = "rgb(250, 250, 250)";
     ctx.font = "24px Helvetica";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
+    ctx.fillStyle = "rgb(250, 250, 250)";
     ctx.fillText("Goblins caught: " + monstersCaught, 32, 32);
   };
 
   // The main game loop
-  var main = function() {
+  function main() {
     var now = Date.now();
     var delta = now - then;
 
-    update(delta / 1000);
-    render();
+    if(!isDead) {
+      update(delta / 1000);
+      render();
 
-    then = now;
-    requestAnimationFrame(main);
+      then = now;
+      requestAnimationFrame(main);
+    }
+    else {
+      renderDeath();
+    }
   };
 
   // Let's play this game!
-  reset();
-  var then = Date.now();
-  main();
+  var then;
+  function restart() {
+    isDead = false;
+    monstersCaught = 0;
+
+    reset();
+    then = Date.now();
+    main();
+  }
+  restart();
 });
