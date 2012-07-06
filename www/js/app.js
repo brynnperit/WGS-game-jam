@@ -55,7 +55,6 @@ require(['sylvester'], function() {
   };
   bulletImage.src = "img/bullet1.png";
 
-
   // Game objects
   var hero = {
     speed : 256, // movement in pixels per second
@@ -234,7 +233,7 @@ require(['sylvester'], function() {
     for (i = 0, l = bulletList.length; i < l; ++ i){
       currentBullet = bulletList[i];
       if (bulletReady) {
-        ctx.drawImage(bulletImage, currentBullet.x, currentBullet.y);
+        ctx.drawImage(bulletImage, currentBullet.x - bulletImage.width/2, currentBullet.y - bulletImage.height/2);
       }
     }
 
