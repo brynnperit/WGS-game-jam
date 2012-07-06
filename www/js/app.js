@@ -47,6 +47,15 @@ require(['sylvester'], function() {
   };
   monsterImage.src = "img/monster.png";
 
+  // Bullet image
+  var bulletReady = false;
+  var bulletImage = new Image();
+  bulletImage.onload = function() {
+    bulletReady = true;
+  };
+  bulletImage.src = "img/bullet1.png";
+
+
   // Game objects
   var hero = {
     speed : 256, // movement in pixels per second
@@ -56,6 +65,10 @@ require(['sylvester'], function() {
   var monster = {};
   var monstersCaught = 0;
   var isDead = false;
+
+  // mouse clicks fire bullets
+  var clickedLocations = [];
+  var bulletList = [];
 
   // Handle keyboard controls
   var keysDown = {};
@@ -72,6 +85,14 @@ require(['sylvester'], function() {
   addEventListener("keyup", function(e) {
     delete keysDown[e.keyCode];
   }, false);
+  
+  canvas.addEventListener("click", function (e) {
+    clickedLocations.push({
+      x: e.clientX,
+      y: e.clientY,
+      time: e.timeStamp
+    });
+  }, false);
 
   // Reset the game when the player catches a monster
   var reset = function() {
@@ -81,6 +102,14 @@ require(['sylvester'], function() {
     // Throw the monster somewhere on the screen randomly
     monster.x = 32 + (Math.random() * (canvas.width - 64));
     monster.y = 32 + (Math.random() * (canvas.height - 64));
+    
+    bulletList = [];
+    clickedLocations = [];
+
+    // set up the font for the score    
+    ctx.font = "24px Helvetica";
+    ctx.fillStyle = "rgb(250, 250, 250)";
+
   };
 
   var ENTER = 13;
@@ -108,7 +137,10 @@ require(['sylvester'], function() {
   }
   
   // Update game objects
+
   function update(modifier) {
+    //TODO: Fix bug where going diagonally is faster than going in one direction only
+
     if ( UP in keysDown) {// Player holding up
       hero.y -= hero.speed * modifier;
     }
@@ -141,6 +173,37 @@ require(['sylvester'], function() {
       hero.y = canvas.height - hero.height;
     }
 
+    var currentMouseEvent;
+
+    //Handle the list of mouse events
+    while(clickedLocations.length > 0) {
+      currentMouseEvent = clickedLocations.pop();
+      var bullet = {
+        speedPPS: 200,
+        directionVector: Vector.create([currentMouseEvent.x - hero.x,
+                                        currentMouseEvent.y - hero.y]),
+        x: hero.x,
+        y: hero.y
+      }; 
+
+      bullet.directionVector =
+        bullet.directionVector.toUnitVector().multiply(bullet.speedPPS);
+      bulletList.push(bullet);
+    }
+
+    var i, currentBullet;
+    for (i = 0; i < bulletList.length; ++ i) {
+      currentBullet = bulletList[i];
+      currentBullet.x += (currentBullet.directionVector.elements[0] * modifier);
+      currentBullet.y += (currentBullet.directionVector.elements[1] * modifier);
+      if (currentBullet.x < 0 || currentBullet.x > canvas.width ||
+          currentBullet.y < 0 || currentBullet.y > canvas.height) {
+        // this bullet is offscreen, ditch it
+        bulletList.splice(i, 1);
+
+      }
+    }
+
     // Are they touching?
     if (hero.x <= (monster.x + 32) && 
         monster.x <= (hero.x + 32) && 
@@ -167,9 +230,15 @@ require(['sylvester'], function() {
       ctx.drawImage(monsterImage, monster.x, monster.y);
     }
 
+    var i, l, currentBullet;
+    for (i = 0, l = bulletList.length; i < l; ++ i){
+      currentBullet = bulletList[i];
+      if (bulletReady) {
+        ctx.drawImage(bulletImage, currentBullet.x, currentBullet.y);
+      }
+    }
+
     // Score
-    ctx.font = "24px Helvetica";
-    ctx.fillStyle = "rgb(250, 250, 250)";
     ctx.fillText("Goblins caught: " + monstersCaught, 32, 32);
   };
 
