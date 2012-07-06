@@ -7,8 +7,6 @@ require.config({
 
 require(['sylvester'], function() {
 
-  var baseBulletSpeedPPS = 200;
-
   // Setup requestAnimationFrame
   requestAnimationFrame = window.requestAnimationFrame ||
     window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
@@ -167,23 +165,29 @@ require(['sylvester'], function() {
     while(clickedLocations.length > 0) {
       currentMouseEvent = clickedLocations.pop();
       var bullet = {
+        speedPPS: 200,
         directionVector: Vector.create([currentMouseEvent.x - hero.x,
                                         currentMouseEvent.y - hero.y]),
         x: hero.x,
         y: hero.y
       }; 
 
-      // TODO: speed doesn't appear to be working as intended
-      bullet.directionVector = bullet.directionVector.toUnitVector().multiply(baseBulletSpeedPPS);
+      bullet.directionVector =
+        bullet.directionVector.toUnitVector().multiply(bullet.speedPPS);
       bulletList.push(bullet);
     }
 
-    var i, l, currentBullet;
-    for (i = 0, l = bulletList.length; i < l; ++ i) {
+    var i, currentBullet;
+    for (i = 0; i < bulletList.length; ++ i) {
       currentBullet = bulletList[i];
       currentBullet.x += (currentBullet.directionVector.elements[0] * modifier);
       currentBullet.y += (currentBullet.directionVector.elements[1] * modifier);
-      //TODO: Kill bullet when it goes offscreen
+      if (currentBullet.x < 0 || currentBullet.x > canvas.width ||
+          currentBullet.y < 0 || currentBullet.y > canvas.height) {
+        // this bullet is offscreen, ditch it
+        bulletList.splice(i, 1);
+
+      }
     }
 
     // Are they touching?
