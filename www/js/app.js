@@ -7,6 +7,8 @@ require.config({
 
 require(['sylvester'], function() {
 
+  var minimumMonsterDistanceOnSpawn = 200;
+
   // Setup requestAnimationFrame
   requestAnimationFrame = window.requestAnimationFrame ||
     window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
@@ -68,7 +70,9 @@ require(['sylvester'], function() {
   var hero = {
     speed : 256, // movement in pixels per second
     width : 32,
-    height : 32
+    height : 32,
+    x : canvas.width / 2,
+    y : canvas.height / 2
   };
   var monster = {};
   var monstersCaught = 0;
@@ -104,12 +108,15 @@ require(['sylvester'], function() {
 
   // Reset the game when the player catches a monster
   var reset = function() {
-    hero.x = canvas.width / 2;
-    hero.y = canvas.height / 2;
-
-    // Throw the monster somewhere on the screen randomly
+    // Throw the monster somewhere on the screen randomly that's not within the
+    // minimum spawn distance of the player
+    do{
     monster.x = 32 + (Math.random() * (canvas.width - 64));
     monster.y = 32 + (Math.random() * (canvas.height - 64));
+    }while(Math.sqrt(
+      Math.pow(monster.x - hero.x, 2),
+      Math.pow(monster.y - hero.y, 2))
+      < minimumMonsterDistanceOnSpawn);
     
     bulletList = [];
     clickedLocations = [];
