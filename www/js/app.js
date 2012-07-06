@@ -127,6 +127,12 @@ require(['sylvester'], function() {
     });
   }, false);
 
+  var ENTER = 13;
+  var UP = 87; // W
+  var DOWN = 83; // A
+  var LEFT = 65; // S
+  var RIGHT = 68; // D
+
   // Reset the game when the player catches a monster
   var reset = function() {
     hero.x = canvas.width / 2;
@@ -145,11 +151,27 @@ require(['sylvester'], function() {
 
   };
 
-  var ENTER = 13;
-  var UP = 87; // W
-  var DOWN = 83; // A
-  var LEFT = 65; // S
-  var RIGHT = 68; // D
+  // Add a bullet, which just a hash of options
+  function addBullet(bullet) {
+    bullet.aabb = { hx: 8, hy: 8 };
+    bullet.directionVector =
+      bullet.directionVector.toUnitVector().multiply(bullet.speedPPS);
+    bulletList.push(bullet);
+  }
+
+  function checkBoundaries(obj) {
+    if (obj.x < 0) {
+      obj.x = 0;
+    } else if (obj.x > canvas.width - obj.width) {
+      obj.x = canvas.width - obj.width;
+    }
+
+    if (obj.y < 0) {
+      obj.y = 0;
+    } else if (obj.y > canvas.height - obj.height) {
+      obj.y = canvas.height - obj.height;
+    }
+  }
 
   function renderDeath() {
     // For some reason, need to do this else the font isn't aliased
@@ -170,41 +192,33 @@ require(['sylvester'], function() {
   }
   
   // Update game objects
-
   function update(modifier) {
     var currentMouseEvent;
 
     //Handle the list of mouse events
     while(clickedLocations.length > 0) {
       currentMouseEvent = clickedLocations.pop();
-      var bullet = {
+      addBullet({
         speedPPS: 200,
         directionVector: Vector.create([currentMouseEvent.x - hero.x,
                                         currentMouseEvent.y - hero.y]),
         x: hero.x,
         y: hero.y,
-        aabb: {
-        	hx: 8,
-        	hy: 8
-        }
-      }; 
-
-      bullet.directionVector =
-        bullet.directionVector.toUnitVector().multiply(bullet.speedPPS);
-      bulletList.push(bullet);
+        fromHero: true
+      });
     }
 
     var heroMoveAmount = {x: 0, y: 0};
-    if ( UP in keysDown) {// Player holding up
+    if (UP in keysDown) {// Player holding up
       heroMoveAmount.y -= hero.speed * modifier;
     }
-    if ( DOWN in keysDown) {// Player holding down
+    if (DOWN in keysDown) {// Player holding down
       heroMoveAmount.y += hero.speed * modifier;
     }
-    if ( LEFT in keysDown) {// Player holding left
+    if (LEFT in keysDown) {// Player holding left
       heroMoveAmount.x -= hero.speed * modifier;
     }
-    if ( RIGHT in keysDown) {// Player holding right
+    if (RIGHT in keysDown) {// Player holding right
       heroMoveAmount.x += hero.speed * modifier;
     }
     // This prevents the hero from moving faster diagonally than they can otherwise
@@ -228,9 +242,14 @@ require(['sylvester'], function() {
         // this bullet is offscreen, ditch it
         bulletList.splice(i, 1);
       }
-      if (checkCollision (monster, currentBullet)) {
-      	monstersCaught ++;
-      	reset();
+      if (currentBullet.fromHero) {
+        if(checkCollision(monster, currentBullet)) {
+      	  monstersCaught++;
+      	  reset();
+        }
+      }
+      else if(checkCollision(hero, currentBullet)) {
+        isDead = true;
       }
     }
 
@@ -240,17 +259,38 @@ require(['sylvester'], function() {
       isDead = true;
     }
 
-    // Constrain the hero to the screen
-    if (hero.x < 0) {
-      hero.x = 0;
-    } else if (hero.x > canvas.width - hero.width) {
-      hero.x = canvas.width - hero.width;
+    // Make the enemy move a little bit
+    if(Math.random() < .3) {
+      var rand = Math.random();
+      var dist = 10;
+
+      if(rand < .1) {
+        monster.x += dist;
+      }
+      else if(rand < .2) {
+        monster.x -= dist;
+      }
+      else if(rand < .3) {
+        monster.y += dist;
+      }
+      else if(rand < .4) {
+        monster.y -= dist;
+      }
     }
 
-    if (hero.y < 0) {
-      hero.y = 0;
-    } else if (hero.y > canvas.height - hero.height) {
-      hero.y = canvas.height - hero.height;
+    // Constrain the hero and monster to the screen
+    checkBoundaries(hero);
+    checkBoundaries(monster);
+
+    // Make the enemy shoot bullets randomly
+    if(Math.random() < .05) {
+      addBullet({ 
+        speedPPS: 150,
+        directionVector: Vector.create([Math.random()*2-1,
+                                        Math.random()*2-1]),
+        x: monster.x + monster.width/2,
+        y: monster.y + monster.height/2
+      });
     }
 
     // Are they touching?
