@@ -47,6 +47,15 @@ require(['sylvester'], function() {
   };
   monsterImage.src = "img/monster.png";
 
+  // Bullet image
+  var bulletReady = false;
+  var bulletImage = new Image();
+  bulletImage.onload = function() {
+    bulletReady = true;
+  };
+  bulletImage.src = "img/bullet1.png";
+
+
   // Game objects
   var hero = {
     speed : 256, // movement in pixels per second
@@ -96,6 +105,11 @@ require(['sylvester'], function() {
     
     bulletList = [];
     clickedLocations = [];
+
+    // set up the font for the score    
+    ctx.font = "24px Helvetica";
+    ctx.fillStyle = "rgb(250, 250, 250)";
+
   };
 
   var ENTER = 13;
@@ -219,12 +233,12 @@ require(['sylvester'], function() {
     var i, l, currentBullet;
     for (i = 0, l = bulletList.length; i < l; ++ i){
       currentBullet = bulletList[i];
-      ctx.drawImage(heroImage, currentBullet.x, currentBullet.y);
+      if (bulletReady) {
+        ctx.drawImage(bulletImage, currentBullet.x, currentBullet.y);
+      }
     }
 
     // Score
-    ctx.font = "24px Helvetica";
-    ctx.fillStyle = "rgb(250, 250, 250)";
     ctx.fillText("Goblins caught: " + monstersCaught, 32, 32);
   };
 
