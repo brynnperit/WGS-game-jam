@@ -7,17 +7,19 @@ require.config({
 
 require(['sylvester', 'jquery'], function(sylvester, $) {
 
+  var hasTwitterImages = false;
+
   // Setup requestAnimationFrame
   requestAnimationFrame = window.requestAnimationFrame ||
     window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
     window.msRequestAnimationFrame;
 
-	function checkCollision( obj1, obj2 ) {
+  function checkCollision( obj1, obj2 ) {
     var top1, top2,
-        bottom1, bottom2,
-        left1, left2,
-        right1, right2;
-    
+      bottom1, bottom2,
+      left1, left2,
+      right1, right2;
+
     top1 = obj1.y + obj1.aabb.hy;
     top2 = obj2.y + obj2.aabb.hy;
     bottom1 = obj1.y - obj1.aabb.hy;
@@ -26,14 +28,14 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
     left2 = obj2.x - obj2.aabb.hx;
     right1 = obj1.x + obj1.aabb.hx;
     right2 = obj2.x + obj2.aabb.hx;
-    
+
     var outsideBottom = bottom1 > top2,
-        outsideTop = top1 < bottom2,
-        outsideLeft = left1 > right2,
-        outsideRight = right1 < left2;
-        
+      outsideTop = top1 < bottom2,
+      outsideLeft = left1 > right2,
+      outsideRight = right1 < left2;
+
     return !( outsideBottom || outsideTop || outsideLeft || outsideRight );
-	}
+  }
 
   // Create the canvas
   var canvas = document.createElement("canvas");
@@ -59,22 +61,26 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
 
   var bgImage = new LoadableImage("img/background.png");
   var heroImage = new LoadableImage("img/hero.png");
-  var monsterImage = new LoadableImage("img/monster.png");
+  var goblinImage = new LoadableImage("img/monster.png");
+  var twitterImages = [];
   var bulletImage = new LoadableImage("img/bullet1.png");
 
   // search for recent tweets with our keyword
   var keyword = "mozilla";
-  var avatarURLs = [];
+
   $.getJSON("http://search.twitter.com/search.json?q=" + keyword +
     "&result_type=mixed"+"&callback=?",
     {},
     function(data){
       $.each(data.results, function(index, val) {
-        avatarURLs.push(val.profile_image_url);
+        var twitterImage = new LoadableImage(val.profile_image_url);
+        twitterImage.image.onload = function(){
+          hasTwitterImages = true;
+          this.ready = true;
+        }.bind(twitterImage);
+        twitterImages.push(twitterImage);
         console.log(val.profile_image_url);
       });
-      monsterReady = false;
-      monsterImage.src = avatarURLs[0];
     });
 
   // Game objects
@@ -88,11 +94,11 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
     }
   };
   var monster = {
-  	width: 30,
-  	height: 32,
+    width: 30,
+    height: 32,
     aabb: {
-  	  hx: 15,
-  	  hy: 16
+      hx: 15,
+      hy: 16
     }
   };
   var monstersCaught = 0;
@@ -117,7 +123,7 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
   addEventListener("keyup", function(e) {
     delete keysDown[e.keyCode];
   }, false);
-  
+
   canvas.addEventListener("click", function (e) {
     clickedLocations.push({
       x: e.clientX,
@@ -140,7 +146,14 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
     // Throw the monster somewhere on the screen randomly
     monster.x = 32 + (Math.random() * (canvas.width - 64));
     monster.y = 32 + (Math.random() * (canvas.height - 64));
-    
+    if (hasTwitterImages){
+      var validMonsterImages = $.grep(twitterImages, function(element, index)
+      {
+        return element.ready;
+      });
+      goblinImage = validMonsterImages[Math.floor(Math.random() * validMonsterImages.length)];
+    }
+
     bulletList = [];
     clickedLocations = [];
 
@@ -183,13 +196,13 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
     ctx.font = "32px Helvetica";
     ctx.fillStyle = "rgb(100, 25, 25)";
     ctx.fillText("But you caught " + monstersCaught + " goblins!",
-                 80, 200);
+      80, 200);
 
     ctx.font = "20px Helvetica";
     ctx.fillStyle = "rgb(255, 255, 255)";
     ctx.fillText("Hit enter to restart", 170, canvas.height - 100);
   }
-  
+
   // Update game objects
   function update(modifier) {
     var currentMouseEvent;
@@ -200,7 +213,7 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
       addBullet({
         speedPPS: 200,
         directionVector: Vector.create([currentMouseEvent.x - hero.x,
-                                        currentMouseEvent.y - hero.y]),
+          currentMouseEvent.y - hero.y]),
         x: hero.x,
         y: hero.y,
         fromHero: true
@@ -237,14 +250,14 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
       currentBullet.x += (currentBullet.directionVector.elements[0] * modifier);
       currentBullet.y += (currentBullet.directionVector.elements[1] * modifier);
       if (currentBullet.x < 0 || currentBullet.x > canvas.width ||
-          currentBullet.y < 0 || currentBullet.y > canvas.height) {
+        currentBullet.y < 0 || currentBullet.y > canvas.height) {
         // this bullet is offscreen, ditch it
         bulletList.splice(i, 1);
       }
       if (currentBullet.fromHero) {
         if(checkCollision(monster, currentBullet)) {
-      	  monstersCaught++;
-      	  reset();
+          monstersCaught++;
+          reset();
         }
       }
       else if(checkCollision(hero, currentBullet)) {
@@ -283,20 +296,20 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
 
     // Make the enemy shoot bullets randomly
     if(Math.random() < .05) {
-      addBullet({ 
+      addBullet({
         speedPPS: 150,
         directionVector: Vector.create([Math.random()*2-1,
-                                        Math.random()*2-1]),
+          Math.random()*2-1]),
         x: monster.x + monster.width/2,
         y: monster.y + monster.height/2
       });
     }
 
     // Are they touching?
-    if (hero.x <= (monster.x + 32) && 
-        monster.x <= (hero.x + 32) && 
-        hero.y <= (monster.y + 32) && 
-        monster.y <= (hero.y + 32)) {
+    if (hero.x <= (monster.x + 32) &&
+      monster.x <= (hero.x + 32) &&
+      hero.y <= (monster.y + 32) &&
+      monster.y <= (hero.y + 32)) {
 
       monstersCaught++;
       reset();
@@ -314,8 +327,8 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
       ctx.drawImage(heroImage.image, hero.x, hero.y);
     }
 
-    if (monsterImage.ready) {
-      ctx.drawImage(monsterImage.image, monster.x, monster.y);
+    if (goblinImage.ready) {
+      ctx.drawImage(goblinImage.image, monster.x, monster.y);
     }
 
     var i, l, currentBullet;
