@@ -296,11 +296,11 @@ require(['sylvester'], function() {
     }
 
     if (heroImage.ready) {
-      ctx.drawImage(heroImage.image, hero.x, hero.y);
+      ctx.drawImage(heroImage.image, hero.x - heroImage.image.width/2, hero.y - heroImage.image.height/2);
     }
 
     if (monsterImage.ready) {
-      ctx.drawImage(monsterImage.image, monster.x, monster.y);
+      ctx.drawImage(monsterImage.image, monster.x - monsterImage.image.width/2, monster.y - monsterImage.image.height/2);
     }
 
     var i, l, currentBullet;
