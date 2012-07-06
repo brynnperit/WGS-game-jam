@@ -61,7 +61,7 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
 
   var bgImage = new LoadableImage("img/background.png");
   var heroImage = new LoadableImage("img/hero.png");
-  var goblinImage = new LoadableImage("img/monster.png");
+  var monsterImage = new LoadableImage("img/monster.png");
   var twitterImages = [];
   var bulletImage = new LoadableImage("img/bullet1.png");
 
@@ -151,7 +151,7 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
       {
         return element.ready;
       });
-      goblinImage = validMonsterImages[Math.floor(Math.random() * validMonsterImages.length)];
+      monsterImage = validMonsterImages[Math.floor(Math.random() * validMonsterImages.length)];
     }
 
     bulletList = [];
@@ -327,8 +327,8 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
       ctx.drawImage(heroImage.image, hero.x, hero.y);
     }
 
-    if (goblinImage.ready) {
-      ctx.drawImage(goblinImage.image, monster.x, monster.y);
+    if (monsterImage.ready) {
+      ctx.drawImage(monsterImage.image, monster.x, monster.y);
     }
 
     var i, l, currentBullet;
