@@ -139,20 +139,29 @@ require(['sylvester'], function() {
   // Update game objects
 
   function update(modifier) {
-    //TODO: Fix bug where going diagonally is faster than going in one direction only
-
+    var heroMoveAmount = {x: 0, y: 0};
     if ( UP in keysDown) {// Player holding up
-      hero.y -= hero.speed * modifier;
+      heroMoveAmount.y -= hero.speed * modifier;
     }
     if ( DOWN in keysDown) {// Player holding down
-      hero.y += hero.speed * modifier;
+      heroMoveAmount.y += hero.speed * modifier;
     }
     if ( LEFT in keysDown) {// Player holding left
-      hero.x -= hero.speed * modifier;
+      heroMoveAmount.x -= hero.speed * modifier;
     }
     if ( RIGHT in keysDown) {// Player holding right
-      hero.x += hero.speed * modifier;
+      heroMoveAmount.x += hero.speed * modifier;
     }
+    //This prevents the hero from moving faster diagonally than they can otherwise
+    var maxMoveAmount = hero.speed * modifier;
+    var actualMoveAmount = Math.sqrt(heroMoveAmount.x * heroMoveAmount.x + heroMoveAmount.y * heroMoveAmount.y);
+    if (actualMoveAmount > maxMoveAmount){
+      heroMoveAmount.x *= (maxMoveAmount/actualMoveAmount);
+      heroMoveAmount.y *= (maxMoveAmount/actualMoveAmount);
+    }
+
+    hero.x += heroMoveAmount.x;
+    hero.y += heroMoveAmount.y;
 
     // The player dies when moving off the left side of the screen,
     // this is just temporary until we get bullets
