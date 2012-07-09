@@ -179,16 +179,16 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
   }
 
   function checkBoundaries(obj) {
-    if (obj.x < 0) {
-      obj.x = 0;
-    } else if (obj.x > canvas.width - obj.width) {
-      obj.x = canvas.width - obj.width;
+    if (obj.x < obj.aabb.hx) {
+      obj.x = obj.aabb.hx;
+    } else if (obj.x > canvas.width - obj.aabb.hx) {
+      obj.x = canvas.width - obj.aabb.hx;
     }
 
-    if (obj.y < 0) {
-      obj.y = 0;
-    } else if (obj.y > canvas.height - obj.height) {
-      obj.y = canvas.height - obj.height;
+    if (obj.y < obj.aabb.hy) {
+      obj.y = obj.aabb.hy;
+    } else if (obj.y > canvas.height - obj.aabb.hy) {
+      obj.y = canvas.height - obj.aabb.hy;
     }
   }
 
@@ -270,12 +270,6 @@ require(['sylvester', 'jquery'], function(sylvester, $) {
       else if(checkCollision(hero, currentBullet)) {
         isDead = true;
       }
-    }
-
-    // The player dies when moving off the left side of the screen,
-    // this is just temporary until we get bullets
-    if (hero.x < 0) {
-      isDead = true;
     }
 
     // Make the enemy move a little bit
